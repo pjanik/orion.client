@@ -24,13 +24,8 @@ eclipse.FileClient = (function() {
 	 * @class Provides operations on files, folders, and projects.
 	 * @name eclipse.FileClient
 	 */
-	function FileClient(serviceRegistry, pluginRegistry) {
-		this.serviceRegistry = serviceRegistry;
-		//ensure the plugin is installed
-//		var filePlugin = pluginRegistry.getPlugin("/plugins/fileClientPlugin.html");
-//		if (filePlugin === null) {
-//			pluginRegistry.installPlugin("/plugins/fileClientPlugin.html");
-//		}
+	function FileClient(fileService) {
+		this.fileService = fileService;
 	}
 	
 	FileClient.prototype = /**@lends eclipse.FileClient.prototype */
@@ -166,33 +161,30 @@ eclipse.FileClient = (function() {
 		 */
 		_doServiceCall: function(funcName, funcArgs) {
 			var clientDeferred = new dojo.Deferred();
-			this.serviceRegistry.getService("IFileService").then(
-				function(fileService) {
-					fileService[funcName].apply(fileService, funcArgs).then(
-						//on success, just forward the result to the client
-						function(result) {
-							clientDeferred.callback(result);
-						},
-						//on failure we might need to retry
-						function(error) {
-							if (error.status === 401 || error.status === 403) {
-								handleAuthenticationError(error, function(message) {
-									//try again
-									fileService[funcName].apply(fileService, funcArgs).then(
-										function(result) {
-											clientDeferred.callback(result);
-										},
-										function(error) {
-											clientDeferred.errback(error);
-										}
-									);
-								});
-							} else {
-								//forward other errors to client
-								clientDeferred.errback(error);
-							}
-						}
-					);
+			var fileService = this.fileService;
+			fileService[funcName].apply(fileService, funcArgs).then(
+				//on success, just forward the result to the client
+				function(result) {
+					clientDeferred.callback(result);
+				},
+				//on failure we might need to retry
+				function(error) {
+					if (error.status === 401 || error.status === 403) {
+						handleAuthenticationError(error, function(message) {
+							//try again
+							fileService[funcName].apply(fileService, funcArgs).then(
+								function(result) {
+									clientDeferred.callback(result);
+								},
+								function(error) {
+									clientDeferred.errback(error);
+								}
+							);
+						});
+					} else {
+						//forward other errors to client
+						clientDeferred.errback(error);
+					}
 				}
 			);
 			return clientDeferred;

@@ -15,8 +15,6 @@ dojo.addOnLoad(function(){
 	var searcher = new eclipse.Searcher({serviceRegistry: serviceRegistry});
 	// Git operations
 	new eclipse.GitService(serviceRegistry);
-	// File operations
-	new eclipse.FileClient(serviceRegistry, pluginRegistry);
 
 	var controller = new orion.GitStatusController(serviceRegistry , "unstagedZone" , "stagedZone");
 	var hash = dojo.hash();
