@@ -57,9 +57,22 @@ dojo.addOnLoad(function(){
 		editorContainerDomNode = dojo.byId("editorContainer"),
 		searchFloat = dojo.byId("searchFloat"),
 		leftPane = dojo.byId("leftPane");
+
+	var fileServices = serviceRegistry.getServiceReferences("IFileService");
+	var fileServiceReference;
 	
-	// File operations
-	serviceRegistry.getService("IFileService").then(function(fileService) {
+	for (var i=0; i<fileServices.length; i++) {
+		var info = {};
+		var propertyNames = fileServices[i].getPropertyNames();
+		for (var j = 0; j < propertyNames.length; j++) {
+			info[propertyNames[j]] = fileServices[i].getProperty(propertyNames[j]);
+		}
+		if (new RegExp(info.pattern).test(dojo.hash())) {
+			fileServiceReference = fileServices[i];
+		}
+	}
+
+	serviceRegistry.getService(fileServiceReference).then(function(fileService) {
 		var fileClient = new eclipse.FileClient(fileService);
 
 		var searcher = new eclipse.Searcher({serviceRegistry: serviceRegistry});

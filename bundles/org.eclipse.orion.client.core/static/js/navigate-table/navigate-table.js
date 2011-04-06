@@ -51,7 +51,21 @@ dojo.addOnLoad(function(){
 	};
 	var searcher = new eclipse.Searcher({serviceRegistry: serviceRegistry});
 	
-	serviceRegistry.getService("IFileService").then(function(fileService) {
+	var fileServices = serviceRegistry.getServiceReferences("IFileService");
+	var fileServiceReference;
+	
+	for (var i=0; i<fileServices.length; i++) {
+		var info = {};
+		var propertyNames = fileServices[i].getPropertyNames();
+		for (var j = 0; j < propertyNames.length; j++) {
+			info[propertyNames[j]] = fileServices[i].getProperty(propertyNames[j]);
+		}
+		if (new RegExp(info.pattern).test(dojo.hash())) {
+			fileServiceReference = fileServices[i];
+		}
+	}
+
+	serviceRegistry.getService(fileServiceReference).then(function(fileService) {
 		var fileClient = new eclipse.FileClient(fileService);
 		
 		var explorer = new eclipse.Explorer(serviceRegistry, treeRoot, selection, searcher, fileClient, "explorer-tree", "pageTitle", "pageActions", "selectionTools");
