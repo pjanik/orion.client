@@ -31,6 +31,14 @@ eclipse.FileClient = (function() {
 	FileClient.prototype = /**@lends eclipse.FileClient.prototype */
 	{
 		/**
+		 * Set the file service
+		 * @param fileService the file service object
+		 */
+		setFileService: function(fileService) {
+			this.fileService = fileService;
+		},
+		
+		/**
 		 * Obtains the children of a remote resource
 		 * @param location The location of the item to obtain children for
 		 * @return A deferred that will provide the array of child objects when complete
