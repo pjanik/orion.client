@@ -82,8 +82,25 @@ eclipse.GitService = (function() {
 			
 		},
 		
-		initGitRepository : function(targetLocation){
-			console.error("Not implemented yet");
+		initGitRepository : function(targetPath){
+			var postData = {};
+			postData.Path = targetPath;
+			return dojo.xhrPost({
+				url : "/git/init/",
+				headers : {
+					"Orion-Version" : "1"
+				},
+				postData : dojo.toJson(postData),
+				handleAs : "json",
+				timeout : 15000,
+				load : function(jsonData, secondArg) {
+					return jsonData;
+				},
+				error : function(error, ioArgs) {
+					mAuth.handleGetAuthenticationError(this, ioArgs);
+					console.error("HTTP status code: ", ioArgs.xhr.status);
+				}
+			});
 		},
 		
 		removeGitRepository : function(repositoryLocation){

@@ -569,9 +569,11 @@ var exports = {};
 			id : "eclipse.initGitRepository",
 			callback : function(item) {
 				var dialog = new widgets.InitGitRepositoryDialog({
-					func : function(target){
+					serviceRegistry: serviceRegistry,
+					fileClient: fileClient,
+					func : function(path){
 								serviceRegistry.getService("orion.git.provider").then(function(gitService) {
-									gitService.initGitRepository(target).then(function(){
+									gitService.initGitRepository(path).then(function(){
 											if(explorer.redisplayClonesList){
 												dojo.hitch(explorer, explorer.redisplayClonesList)();
 											}

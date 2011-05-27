@@ -28,10 +28,38 @@ dojo.declare("widgets.InitGitRepositoryDialog", [dijit.Dialog, widgets._OrionDia
 	postMixInProperties : function() {
 		this.inherited(arguments);
 		this.title = "Init Git Repository";
-		this.gitTargetLabelText = "Target:";
+		//this.gitTargetLabelText = "Target:";
+		this.gitPathLabelText = "Existing directory:";
+	},
+	postCreate : function(){
+		this.inherited(arguments);
+		dojo.connect(this.existingDirectoryLink, "onclick", null, dojo.hitch(this, this.showExistingFolder));
+		dojo.connect(this.openDirectoryPickerLink, "onclick", null, dojo.hitch(this, this.openDirectoryPickerDialog));
 	},
 	execute: function() {
-		this.options.func(this.gitTarget.value);
+		this.options.func(this.gitPath.value);
+	},
+	showExistingFolder: function(){
+		this.basicSection.style.display = "none";
+		this.existingProjectSection.style.display = "table-row";
+		this.existingProjectSection_1.style.display = "table-row";
+		this.openDirectoryPickerDialog();
+	},
+	openDirectoryPickerDialog: function(){
+		var self = this;
+		var dialog = new widgets.DirectoryPrompterDialog({
+				title: "Choose a Folder",
+				serviceRegistry: this.options.serviceRegistry,
+				fileClient: this.options.fileClient,	
+				func: dojo.hitch(this, function(targetFolder) {
+					if (targetFolder && targetFolder.Location) {
+						this.gitPath.value = targetFolder.Location;
+						this.shownGitPath.innerHTML = "<a href='/navigate/table.html#"+targetFolder.ChildrenLocation+"'>"+targetFolder.Name+"</a>";
+					}
+				})
+			});
+			dialog.startup();
+			dialog.show();
 	}
 });
 });
