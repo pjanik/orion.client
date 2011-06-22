@@ -931,13 +931,20 @@ var exports = {};
 					advancedOnly: true,
 					func : function(gitUrl, path, name){
 						exports.getDefaultSshOptions(serviceRegistry).then(function(options){
+									var func = arguments.callee;
 									serviceRegistry.getService("orion.git.provider").then(function(gitService) {
-											gitService.cloneGitRepository(name, gitUrl, path, explorer.defaultPath).then(
-													function(jsonData){
-														if(explorer.redisplayClonesList){
-															dojo.hitch(explorer, explorer.redisplayClonesList)();
-														}
-													});
+										serviceRegistry.getService("orion.page.message").then(function(progressService) {
+											var deferred = gitService.cloneGitRepository(name, gitUrl, path, explorer.defaultPath);
+											progressService.showWhile(deferred, "Initializing repository: " + name).then(
+												function(jsonData, secondArg) {
+													exports.handleProgressServiceResponse(jsonData, options, serviceRegistry,
+															function(jsonData){
+																if(explorer.redisplayClonesList){
+																	dojo.hitch(explorer, explorer.redisplayClonesList)();
+																}
+															}, func, "Init Git Repository");
+												});
+										});
 									});
 								});
 							}
