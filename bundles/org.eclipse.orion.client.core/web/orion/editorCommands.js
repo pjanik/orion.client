@@ -45,11 +45,11 @@ exports.EditorCommandFactory = (function() {
 				editor.getTextView().setKeyBinding(new mKeyBinding.KeyBinding('s', true), "Save");
 				editor.getTextView().setAction("Save", dojo.hitch(this, function () {
 					var contents = editor.getTextView().getText();
-					var etag = this.inputManager.getFileMetadata().ETag;
-					var args = { "ETag" : etag };
+					var etag = this.inputManager._fileMetadata.ETag;
+					var args = { ETag : etag };
 					this.fileClient.write(this.inputManager.getInput(), contents, args).then(
 							dojo.hitch(this, function(result) {
-								this.inputManager.getFileMetadata().ETag = result.ETag;
+								this.inputManager._fileMetadata.ETag = result.ETag;
 								editor.onInputChange(this.inputManager.getInput(), null, contents, true);
 								if(this.inputManager.afterSave){
 									this.inputManager.afterSave();
@@ -64,7 +64,7 @@ exports.EditorCommandFactory = (function() {
 										// repeat save operation, but without ETag 
 										this.fileClient.write(this.inputManager.getInput(), contents).then(
 												dojo.hitch(this, function(result) {
-													this.inputManager.getFileMetadata().ETag = result.ETag;
+													this.inputManager._fileMetadata.ETag = result.ETag;
 													editor.onInputChange(this.inputManager.getInput(), null, contents, true);
 													if(this.inputManager.afterSave){
 														this.inputManager.afterSave();
