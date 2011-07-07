@@ -560,19 +560,37 @@ var exports = {};
 			id : "eclipse.orion.git.push",
 			callback: function(item) {
 				var path = dojo.hash();
+				var args = { ETag : item.ETag };
 				exports.getDefaultSshOptions(serviceRegistry).then(function(options){
 						var func = arguments.callee;
 						serviceRegistry.getService("orion.git.provider").then(function(gitService) {
 							serviceRegistry.getService("orion.page.message").then(function(progressService) {
-								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
-								progressService.showWhile(deferred, "Pushing remote: " + path).then(function(remoteJsonData){
-									exports.handleProgressServiceResponse(remoteJsonData, options, serviceRegistry,
-											function(jsonData){
-												if (jsonData.Result.Severity == "Ok")
-													dojo.query(".treeTableRow").forEach(function(node, i) {
-														dojo.toggleClass(node, "outgoingCommitsdRow", false);
-													});
-											}, func, "Push Git Repository");
+								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase, args);
+								progressService.showWhile(deferred, "Pushing remote: " + path).then(
+									function(remoteJsonData){
+										exports.handleProgressServiceResponse(remoteJsonData, options, serviceRegistry,
+												function(jsonData){
+													if (jsonData.Result.Severity == "Ok")
+														dojo.query(".treeTableRow").forEach(function(node, i) {
+															dojo.toggleClass(node, "outgoingCommitsdRow", false);
+														});
+												}, func, "Push Git Repository");
+									},
+									function(error) {
+										 // expected error - HTTP 412 Precondition Failed 
+										 // occurs when commit history is out of sync with the server
+										if (error.status == 412) {
+											error.log = false;
+											var display = [];
+											display.Severity = "Error";
+											display.HTML = false;
+											display.Message = "Commit history is out of sync with the server.";
+											progressService.setProgressResult(display);
+											alert("Commit history is out of sync with the server! Refresh the log page before pushing.");
+										}
+										else {
+											displayErrorOnStatus(error);
+										}
 									});
 								});
 							});
@@ -902,21 +920,39 @@ var exports = {};
 			id : "eclipse.orion.git.push",
 			callback: function(item) {
 				var path = dojo.hash();
+				var args = { ETag : item.ETag };
 				exports.getDefaultSshOptions(serviceRegistry).then(function(options){
 						var func = arguments.callee;
 						serviceRegistry.getService("orion.git.provider").then(function(gitService) {
 							serviceRegistry.getService("orion.page.message").then(function(progressService) {
-								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
-								progressService.showWhile(deferred, "Pushing remote: " + path).then(function(remoteJsonData){
-									exports.handleProgressServiceResponse(remoteJsonData, options, serviceRegistry,
-											function(jsonData){
-												if (jsonData.Result.Severity == "Ok"){
-													dojo.query(".treeTableRow").forEach(function(node, i) {
-														dojo.toggleClass(node, "outgoingCommitsdRow", false);
-													});
-													refreshStatusCallBack();
-												}
-											}, func, "Push Git Repository");
+								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase, args);
+								progressService.showWhile(deferred, "Pushing remote: " + path).then(
+									function(remoteJsonData){
+										exports.handleProgressServiceResponse(remoteJsonData, options, serviceRegistry,
+												function(jsonData){
+													if (jsonData.Result.Severity == "Ok"){
+														dojo.query(".treeTableRow").forEach(function(node, i) {
+															dojo.toggleClass(node, "outgoingCommitsdRow", false);
+														});
+														refreshStatusCallBack();
+													}
+												}, func, "Push Git Repository");
+									},
+									function(error) {
+										 // expected error - HTTP 412 Precondition Failed 
+										 // occurs when commit history is out of sync with the server
+										if (error.status == 412) {
+											error.log = false;
+											var display = [];
+											display.Severity = "Error";
+											display.HTML = false;
+											display.Message = "Commit history is out of sync with the server.";
+											progressService.setProgressResult(display);
+											alert("Commit history is out of sync with the server! Refresh the status page before pushing.");
+										}
+										else {
+											displayErrorOnStatus(error);
+										}
 									});
 								});
 							});

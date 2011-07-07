@@ -31,6 +31,7 @@ orion.GitStatusModel = (function() {
 		
 		init: function(jsonData){
 			this.items = jsonData;
+			this.ETag = jsonData.ETag;
 			/*
 			for(var i = 0; i < this.conflictPatterns.length ; i++ ){
 				this._markConflict(this.conflictPatterns[i]);
@@ -644,7 +645,7 @@ orion.GitStatusController = (function() {
 					}
 				}).then(function(commitLogJsonData){
 					if (commitLogJsonData.RemoteLocation == null || !that._curBranch){
-						that._gitCommitNavigatorLog.loadCommitsList((that._curBranch ? that._curBranch.CommitLocation :  that._model.items.CommitLocation) +"?page=1&pageSize=5", {Type:"LocalBranch" ,RemoteLocation: commitLogJsonData.RemoteLocation});
+						that._gitCommitNavigatorLog.loadCommitsList((that._curBranch ? that._curBranch.CommitLocation :  that._model.items.CommitLocation) +"?page=1&pageSize=5", {Type:"LocalBranch", RemoteLocation: commitLogJsonData.RemoteLocation});
 						if(that._curRemote && that._curBranch)
 							that._logTableRenderer.renderAdditionalAction(that._gitCommitNavigatorLog._lastTreeRoot);
 					}
@@ -660,7 +661,7 @@ orion.GitStatusController = (function() {
 								that._registry.getService("orion.git.provider").then(function(gitService){
 									gitService.getLog(remoteJsonData.CommitLocation, "HEAD", function(scopedCommitsJsonData, secondArg) {
 										that._gitCommitNavigatorLog.renderer.setOutgoingCommits(scopedCommitsJsonData);
-										that._gitCommitNavigatorLog.loadCommitsList( that._curBranch.CommitLocation +"?page=1&pageSize=5" , {Type:"LocalBranch" ,RemoteLocation: commitLogJsonData.RemoteLocation});
+										that._gitCommitNavigatorLog.loadCommitsList( that._curBranch.CommitLocation +"?page=1&pageSize=5" , {Type:"LocalBranch" ,RemoteLocation: commitLogJsonData.RemoteLocation, ETag: commitLogJsonData.ETag});
 										if(that._curRemote)
 											that._logTableRenderer.renderAdditionalAction(that._gitCommitNavigatorLog._lastTreeRoot);
 									});
@@ -1081,6 +1082,7 @@ orion.GitStatusController = (function() {
 		
 		commitAll: function(location , message , body){
 			var self = this;
+			var args = { "ETag" : self._model.ETag };
 			self._statusService.setProgressMessage("Committing...");
 			self._registry.getService("orion.git.provider").then(
 					function(service) {
@@ -1089,8 +1091,22 @@ orion.GitStatusController = (function() {
 											 	 self.getGitStatus(self._url,true);
 											 },
 											 function(response, ioArgs){
-												 self.handleServerErrors(response, ioArgs);
-											 }
+												 // expected error - HTTP 412 Precondition Failed 
+												 // occurs when the index file is out of sync with the server
+												 if (response.status == 412) {
+													 response.log = false;
+													 var display = [];
+													 display.Severity = "Error";
+													 display.HTML = false;
+													 display.Message = "Status page is out of sync with the server."; 														
+													 self._statusService.setProgressResult(display);
+													 alert("Git index file is out of sync with the server! Refresh the status page before commiting.")
+												 } 
+												 else {
+													 self.handleServerErrors(response, ioArgs);
+												 }
+											 },
+											 args // with ETag
 						);
 					});
 		},

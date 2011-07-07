@@ -296,12 +296,16 @@ eclipse.GitService = (function() {
 			});
 		},
 		
-		commitAll: function(location , message , body ,  onLoad , onError){
+		commitAll: function(location , message , body , onLoad , onError , args){
+			var headerData = {
+					"Orion-Version": "1"
+				};
+			if (args && args.ETag) {
+				headerData["If-Match"] = args.ETag;
+			}
 			dojo.xhrPost({
 				url: location , 
-				headers: {
-					"Orion-Version": "1"
-				},
+				headers: headerData,
 				handleAs: "json",
 				timeout: 15000,
 				postData: body,
@@ -319,7 +323,8 @@ eclipse.GitService = (function() {
 						onError(response,ioArgs);
 					mAuth.handleGetAuthenticationError(this, ioArgs);
 					return response;
-				}
+				},
+				failOk: true
 			});
 		},
 		
@@ -643,14 +648,17 @@ eclipse.GitService = (function() {
 				}
 			});
 		},
-		doPush : function(gitBranchURI, srcRef, onLoad, gitSshUsername, gitSshPassword, gitSshKnownHost, gitPrivateKey, gitPassphrase) {
+		doPush : function(gitBranchURI, srcRef, onLoad, gitSshUsername, gitSshPassword, gitSshKnownHost, gitPrivateKey, gitPassphrase, args) {
 			var service = this;
-			
+			var headerData = {
+					"Orion-Version": "1"
+				};
+			if (args && args.ETag) {
+				headerData["If-Match"] = args.ETag;
+			}
 			return dojo.xhrPost({
 				url : gitBranchURI,
-				headers : {
-					"Orion-Version" : "1"
-				},
+				headers : headerData,
 				postData : dojo.toJson({
 					"PushSrcRef" : srcRef,
 					"PushTags" : true,
@@ -673,9 +681,13 @@ eclipse.GitService = (function() {
 				},
 				error : function(error, ioArgs) {
 					mAuth.handleGetAuthenticationError(this, ioArgs);
-					console.error("HTTP status code: ", ioArgs.xhr.status);
+					if (ioArgs.xhr.status != 412) {
+						// 412 PRECONDITION FAILED is expected and handled by the Orion client
+						console.error("HTTP status code: ", ioArgs.xhr.status);
+					}
 					return error;
-				}
+				},
+				failOk : true
 			});
 		},
 		getLog : function(gitCommitURI, commitName, onLoad) {
