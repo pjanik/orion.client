@@ -299,6 +299,34 @@ var exports = {};
 		);
 		commandService.addCommand(removeBranchCommand, "object");
 		
+		var removeRemoteBranchCommand = new mCommands.Command({
+			name: "Remove Remote Branch",
+			image: "/images/delete.gif",
+			id: "eclipse.removeRemoteBranch",
+			callback: function(item) {
+				if(confirm("Are you sure you want to remove remote branch " + item.Name+"?"))
+				exports.getDefaultSshOptions(serviceRegistry).then(function(options){
+						var func = arguments.callee;
+						serviceRegistry.getService("orion.git.provider").then(function(gitService) {
+							serviceRegistry.getService("orion.page.message").then(function(progressService) {
+								var deferred = gitService.doPush(item.Location, "", false, false, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
+								progressService.showWhile(deferred, "Removing remote branch: " + item.Name).then(function(remoteJsonData){
+									exports.handleProgressServiceResponse(remoteJsonData, options, serviceRegistry,
+											function(jsonData){
+												if (jsonData.Result.Severity == "Ok")
+													dojo.hitch(explorer, explorer.changedItem)(item.parent);
+											}, func, "Remove Remote Branch");
+									});
+								});
+							});
+				});
+			},
+			visibleWhen: function(item) {
+				return item.Type === "RemoteTrackingBranch";
+			}}
+		);
+		commandService.addCommand(removeRemoteBranchCommand, "object");
+		
 		var addRemoteCommand = new mCommands.Command({
 			name: "Add Remote",
 			image: "/images/add.gif",
@@ -622,7 +650,7 @@ var exports = {};
 						var func = arguments.callee;
 						serviceRegistry.getService("orion.git.provider").then(function(gitService) {
 							serviceRegistry.getService("orion.page.message").then(function(progressService) {
-								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", false, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
+								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", true, false, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
 								progressService.showWhile(deferred, "Pushing remote: " + path).then(function(remoteJsonData){
 									exports.handleProgressServiceResponse(remoteJsonData, options, serviceRegistry,
 											function(jsonData){
@@ -659,7 +687,7 @@ var exports = {};
 						var func = arguments.callee;
 						serviceRegistry.getService("orion.git.provider").then(function(gitService) {
 							serviceRegistry.getService("orion.page.message").then(function(progressService) {
-								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", true, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
+								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", true, true, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
 								progressService.showWhile(deferred, "Pushing remote: " + path).then(function(remoteJsonData){
 									exports.handleProgressServiceResponse(remoteJsonData, options, serviceRegistry,
 											function(jsonData){
@@ -998,7 +1026,7 @@ var exports = {};
 						var func = arguments.callee;
 						serviceRegistry.getService("orion.git.provider").then(function(gitService) {
 							serviceRegistry.getService("orion.page.message").then(function(progressService) {
-								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", false, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
+								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", true, false, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
 								progressService.showWhile(deferred, "Pushing remote: " + path).then(function(remoteJsonData){
 									exports.handleProgressServiceResponse(remoteJsonData, options, serviceRegistry,
 											function(jsonData){
