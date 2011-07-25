@@ -56,6 +56,7 @@ dojo.addOnLoad(function() {
 	commandService.registerCommandContribution("eclipse.openCloneContent", 2);
 	commandService.registerCommandContribution("eclipse.orion.git.fetch", 2);
 	commandService.registerCommandContribution("eclipse.orion.git.merge", 2);
+	commandService.registerCommandContribution("eclipse.orion.git.rebase", 2);
 	commandService.registerCommandContribution("eclipse.orion.git.push", 2);
 	commandService.registerCommandContribution("eclipse.orion.git.pushto", 3);
 	commandService.registerCommandContribution("eclipse.orion.git.resetIndex", 4);
