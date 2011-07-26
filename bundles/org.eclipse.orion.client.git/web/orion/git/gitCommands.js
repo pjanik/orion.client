@@ -710,7 +710,7 @@ var exports = {};
 						var func = arguments.callee;
 						serviceRegistry.getService("orion.git.provider").then(function(gitService) {
 							serviceRegistry.getService("orion.page.message").then(function(progressService) {
-								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", false, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
+								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", true, false, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
 								progressService.showWhile(deferred, "Pushing remote: " + path).then(function(remoteJsonData){
 									exports.handleProgressServiceResponse(remoteJsonData, options, serviceRegistry,
 											function(jsonData){
@@ -747,7 +747,7 @@ var exports = {};
 						var func = arguments.callee;
 						serviceRegistry.getService("orion.git.provider").then(function(gitService) {
 							serviceRegistry.getService("orion.page.message").then(function(progressService) {
-								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", true, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
+								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", true, true, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
 								progressService.showWhile(deferred, "Pushing remote: " + path).then(function(remoteJsonData){
 									exports.handleProgressServiceResponse(remoteJsonData, options, serviceRegistry,
 											function(jsonData){
@@ -770,6 +770,38 @@ var exports = {};
 	
 		commandService.addCommand(pushForceCommand, "dom");
 		commandService.addCommand(pushForceCommand, "object");
+		
+		var pushRemoteCommand = new mCommands.Command({
+			name : "Push Remote",
+			image : "/git/images/push.gif",
+			id : "eclipse.orion.git.pushRemote",
+			callback: function(item) {
+				exports.getDefaultSshOptions(serviceRegistry).then(function(options){
+						var func = arguments.callee;
+						serviceRegistry.getService("orion.git.provider").then(function(gitService) {
+							serviceRegistry.getService("orion.page.message").then(function(progressService) {
+								var deferred = gitService.doPush(item.Location, null, false, false, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
+								progressService.showWhile(deferred, "Pushing remote: " + item.Name).then(function(remoteJsonData){
+									exports.handleProgressServiceResponse(remoteJsonData, options, serviceRegistry,
+											function(jsonData){
+												if (jsonData.Result.Severity == "Ok")
+													dojo.query(".treeTableRow").forEach(function(node, i) {
+														dojo.toggleClass(node, "outgoingCommitsdRow", false);
+													});
+											}, func, "Push Git Repository");
+									});
+								});
+							});
+				});
+			},
+			visibleWhen : function(item) {
+				// for action in the repo view
+				return item.Type === "Remote";
+			}
+		});
+	
+		commandService.addCommand(pushRemoteCommand, "dom");
+		commandService.addCommand(pushRemoteCommand, "object");
 		
 		var switchToRemote = new mCommands.Command({
 			name : "Switch to Remote",
@@ -1086,7 +1118,7 @@ var exports = {};
 						var func = arguments.callee;
 						serviceRegistry.getService("orion.git.provider").then(function(gitService) {
 							serviceRegistry.getService("orion.page.message").then(function(progressService) {
-								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", false, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
+								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", true, false, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
 								progressService.showWhile(deferred, "Pushing remote: " + path).then(function(remoteJsonData){
 									exports.handleProgressServiceResponse(remoteJsonData, options, serviceRegistry,
 											function(jsonData){
