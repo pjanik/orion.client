@@ -100,6 +100,63 @@ exports.GitCommitNavigator = (function() {
 		if(this.commitDetails)
 			this.commitDetails.loadCommitDetails(commitDetails);
 	};
+	
+	GitCommitNavigator.prototype.markBranch = function(branchName) {
+		// clear if some branch has been marked earlier
+		if (this._markedBranch) {
+			this.renderer.unmarkBranch(this._markedBranch);
+		}
+		
+		// just branch unmarking, so return
+		if (this._markedBranch === branchName) {
+			this._markedBranch = null;
+			return;
+		}
+		
+		// begin marking proper commits
+		// find which commit branch is pointing to
+		var startCommit;
+		dojo.forEach(this._lastTreeRoot.Children, function(commit, i) {
+			dojo.forEach(commit.Branches, function(branch, i) {
+				if (branch.FullName === branchName){
+					startCommit = commit;
+				}
+			});
+		});
+		
+		// BFS 
+		var result = [];
+		var visited = [];
+		var queue = [];
+		
+		queue.push(startCommit.Name);
+		visited[startCommit.Name] = true;
+		
+		while (queue.length > 0) {
+			var commitName = queue.shift();
+			result.push(commitName);
+			// look for commit data 
+			var commitData;
+			dojo.forEach(this._lastTreeRoot.Children, function(commit, i) {
+				if (commit.Name === commitName){
+					commitData = commit;
+				}
+			});
+			// add parents to queue
+			dojo.forEach(commitData.Parents, function(parent, i) {
+				if (!visited[parent.Name]) {
+					queue.push(parent.Name);
+					visited[parent.Name] = true;
+				}
+			});
+		}
+		
+		// mark proper commits and branch name
+		this.renderer.markBranch(branchName, result);
+		
+		// remember that branch is marked
+		this._markedBranch = branchName;
+	};
 		
 	return GitCommitNavigator;
 }());
@@ -218,10 +275,23 @@ exports.GitCommitRenderer = (function() {
 			if (this.options['minimal'])
 				break;
 			
+			var self = this;
 			var td = document.createElement("td", {style: "padding-left: 5px; padding-right: 5px"});
 			dojo.forEach(item.Branches, function(branch, i){
-				dojo.place(document.createTextNode(branch.FullName), dojo.create("p", {style: "margin: 5px"}, td, "last"), "only");
+				var p = dojo.create("p", {id: branch.FullName, style: "margin: 5px"}, td, "last");
+				var link = dojo.create("a", {className: "navlinkonpage"}, p, "last");
+				dojo.connect(link, "onclick", link, dojo.hitch(this, function() {
+					self.explorer.markBranch(branch.FullName);	
+				}));			
+				dojo.connect(link, "onmouseover", link, function() {
+					link.style.cursor = /*self._controller.loading ? 'wait' :*/"pointer";
+				});
+				dojo.connect(link, "onmouseout", link, function() {
+					link.style.cursor = /*self._controller.loading ? 'wait' :*/"default";
+				});
+				dojo.place(document.createTextNode(branch.FullName), link, "only");
 			});
+				
 			return td;
 			break;
 		case 5:
@@ -235,6 +305,30 @@ exports.GitCommitRenderer = (function() {
 			return td;
 			break;
 		};
+	};
+	
+	GitCommitRenderer.prototype.markBranch = function(branchName, branchCommits) {
+		dojo.query(".treeTableRow").forEach(function(node, i) {
+			var isInResultSet = false;
+			dojo.forEach(branchCommits, function(commitName, i) {
+				if (node.id.indexOf(commitName) != -1) {
+					isInResultSet = true;	
+				}
+			});
+			if (isInResultSet) {
+				dojo.toggleClass(node.children[1], "gitSelectedBranchRow", true);
+			}
+		});
+		var branchNode = dojo.byId(branchName);
+		dojo.toggleClass(branchNode, "gitSelectedBranchRow", true);
+	};
+	
+	GitCommitRenderer.prototype.unmarkBranch = function(branchName) {
+		dojo.query(".treeTableRow").forEach(function(node, i) {
+			dojo.toggleClass(node.children[1], "gitSelectedBranchRow", false);
+		});
+		var branchNode = dojo.byId(branchName);
+		dojo.toggleClass(branchNode, "gitSelectedBranchRow", false);
 	};
 	
 	return GitCommitRenderer;
