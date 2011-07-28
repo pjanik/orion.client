@@ -739,15 +739,17 @@ var exports = {};
 						serviceRegistry.getService("orion.git.provider").then(function(gitService) {
 							serviceRegistry.getService("orion.page.message").then(function(progressService) {
 								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", true, false, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
-								progressService.showWhile(deferred, "Pushing remote: " + path).then(function(remoteJsonData){
-									exports.handleProgressServiceResponse(remoteJsonData, options, serviceRegistry,
-											function(jsonData){
-												if (jsonData.Result.Severity == "Ok")
-													dojo.query(".treeTableRow").forEach(function(node, i) {
-														dojo.toggleClass(node, "outgoingCommitsdRow", false);
-													});
-											}, func, "Push Git Repository");
-									});
+								progressService.showWhile(deferred, "Pushing remote: " + path).then(
+										function(jsonData, secondArg) {
+											exports.handleProgressServiceResponse(jsonData, options, serviceRegistry,
+													function(jsonData){
+														if (explorer.parentId === "explorer-tree")
+															gitService.getLog(path, "HEAD", function(scopedCommitsJsonData, secondArd) {
+																explorer.renderer.setOutgoingCommits(scopedCommitsJsonData);
+																explorer.loadCommitsList(path, item, true);			
+															});
+													}, func, "Push Git Repository");
+										});
 								});
 							});
 				});
@@ -776,15 +778,17 @@ var exports = {};
 						serviceRegistry.getService("orion.git.provider").then(function(gitService) {
 							serviceRegistry.getService("orion.page.message").then(function(progressService) {
 								var deferred = gitService.doPush(item.RemoteLocation, "HEAD", true, true, null, options.gitSshUsername, options.gitSshPassword, options.knownHosts, options.gitPrivateKey, options.gitPassphrase);
-								progressService.showWhile(deferred, "Pushing remote: " + path).then(function(remoteJsonData){
-									exports.handleProgressServiceResponse(remoteJsonData, options, serviceRegistry,
-											function(jsonData){
-												if (jsonData.Result.Severity == "Ok")
-													dojo.query(".treeTableRow").forEach(function(node, i) {
-														dojo.toggleClass(node, "outgoingCommitsdRow", false);
-													});
-											}, func, "Push Git Repository");
-									});
+								progressService.showWhile(deferred, "Pushing remote: " + path).then(
+										function(jsonData, secondArg) {
+											exports.handleProgressServiceResponse(jsonData, options, serviceRegistry,
+													function(jsonData){
+														if (explorer.parentId === "explorer-tree")
+															gitService.getLog(path, "HEAD", function(scopedCommitsJsonData, secondArd) {
+																explorer.renderer.setOutgoingCommits(scopedCommitsJsonData);
+																explorer.loadCommitsList(path, item, true);			
+															});
+													}, func, "Push Git Repository");
+										});
 								});
 							});
 				});
