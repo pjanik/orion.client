@@ -18,6 +18,23 @@
 	background-position: left top; 
 }
 
+.gitCommitMessage {
+	margin: 5px;  
+	padding-left: 20px;
+}
+
+.gitOtherBranch a {
+	color: grey;
+}
+
+.gitOtherBranch div {
+	padding-left: 30px;
+}
+
+.gitOtherBranch div a {
+	color: grey;
+}
+
 .gitAuthorImage {
 	border: 1px solid lightGrey;
 	padding: 2px;

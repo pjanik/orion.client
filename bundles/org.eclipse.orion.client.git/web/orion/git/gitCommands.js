@@ -396,7 +396,7 @@ var exports = {};
 				return "/git/git-log.html#" + item.CommitLocation + "?page=1";
 			},
 			visibleWhen : function(item) {
-				if (!item.CommitLocation)
+				if (!item.CommitLocation || item.Type === "Branch")
 					return false;
 				return true;
 			}
